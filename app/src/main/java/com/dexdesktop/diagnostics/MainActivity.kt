@@ -55,6 +55,7 @@ private val manualTests = listOf(
 class MainActivity : ComponentActivity() {
     private var report by mutableStateOf<JSONObject?>(null)
     private var hostedWidget by mutableStateOf<AppWidgetHostView?>(null)
+    private var widgetStatus by mutableStateOf("Todavía no se ha iniciado la selección.")
     private var activeWidgetId: Int? = null
     private var pendingWidgetId: Int? = null
     private val widgetHost by lazy { AppWidgetHost(this, APP_WIDGET_HOST_ID) }
@@ -70,27 +71,39 @@ class MainActivity : ComponentActivity() {
     private val pickWidget = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         val id = result.data?.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, pendingWidgetId ?: -1)
             ?: (pendingWidgetId ?: -1)
+        widgetStatus = "Selector cerrado: resultCode=${result.resultCode}, widgetId=$id"
         if (result.resultCode == RESULT_OK && id >= 0) {
             val info = widgetManager.getAppWidgetInfo(id)
-            if (info?.configure != null) {
-                val configureIntent = Intent(AppWidgetManager.ACTION_APPWIDGET_CONFIGURE)
-                    .setComponent(info.configure)
-                    .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, id)
-                configureWidget.launch(configureIntent)
+            if (info == null) {
+                widgetStatus = "Android devolvió widgetId=$id, pero AppWidgetManager.getAppWidgetInfo() devolvió null."
+                widgetHost.deleteAppWidgetId(id)
+                pendingWidgetId = null
             } else {
-                showHostedWidget(id)
+                widgetStatus = "Seleccionado: ${info.provider.flattenToShortString()} · ${info.loadLabel(packageManager)} · id=$id"
+                if (info.configure != null) {
+                    val configureIntent = Intent(AppWidgetManager.ACTION_APPWIDGET_CONFIGURE)
+                        .setComponent(info.configure)
+                        .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, id)
+                    widgetStatus += " · requiere configuración"
+                    configureWidget.launch(configureIntent)
+                } else {
+                    showHostedWidget(id)
+                }
             }
         } else {
             if (id >= 0) widgetHost.deleteAppWidgetId(id)
             pendingWidgetId = null
+            widgetStatus += " · selección cancelada o no confirmada"
         }
     }
 
     private val configureWidget = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         val id = pendingWidgetId
         if (result.resultCode == RESULT_OK && id != null) {
+            widgetStatus = "Configuración completada para widgetId=$id."
             showHostedWidget(id)
         } else {
+            widgetStatus = "La configuración no terminó correctamente: resultCode=${result.resultCode}, widgetId=${id ?: "null"}."
             id?.let { widgetHost.deleteAppWidgetId(it) }
             pendingWidgetId = null
         }
@@ -137,6 +150,7 @@ class MainActivity : ComponentActivity() {
                                 Text("Prueba de widget Android real", style = MaterialTheme.typography.titleLarge)
                                 Text("Abre el selector de widgets del sistema. Elige uno, completa su configuración si la solicita y comprueba que aparece aquí.")
                                 Button(onClick = { beginWidgetSelection() }) { Text("Añadir widget real") }
+                                Text(widgetStatus, style = MaterialTheme.typography.bodySmall)
                                 hostedWidget?.let { view ->
                                     Text("Widget añadido. Comprueba que se muestra correctamente y después marca el resultado.")
                                     AndroidView(
@@ -204,24 +218,49 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun beginWidgetSelection() {
-        val id = widgetHost.allocateAppWidgetId()
-        pendingWidgetId = id
-        val intent = Intent(AppWidgetManager.ACTION_APPWIDGET_PICK)
-            .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, id)
-        pickWidget.launch(intent)
+        try {
+            val id = widgetHost.allocateAppWidgetId()
+            pendingWidgetId = id
+            widgetStatus = "Abriendo selector del sistema (widgetId=$id)…"
+            val intent = Intent(AppWidgetManager.ACTION_APPWIDGET_PICK)
+                .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, id)
+            pickWidget.launch(intent)
+        } catch (error: Exception) {
+            widgetStatus = "No se pudo abrir el selector: ${error.javaClass.simpleName}: ${error.message}"
+            pendingWidgetId?.let { widgetHost.deleteAppWidgetId(it) }
+            pendingWidgetId = null
+        }
     }
 
     private fun showHostedWidget(id: Int) {
-        val info = widgetManager.getAppWidgetInfo(id)
-        if (info == null) {
+        try {
+            val info = widgetManager.getAppWidgetInfo(id)
+            if (info == null) {
+                widgetStatus = "No se puede mostrar: no hay AppWidgetProviderInfo para widgetId=$id."
+                widgetHost.deleteAppWidgetId(id)
+                pendingWidgetId = null
+                return
+            }
+            val view = widgetHost.createView(this, id, info)
+            view.setAppWidget(id, info)
+            val density = resources.displayMetrics.density
+            view.minimumWidth = (info.minWidth * density).toInt()
+            view.minimumHeight = (maxOf(info.minHeight, 100) * density).toInt()
+            view.layoutParams = FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+            hostedWidget?.let { (it.parent as? ViewGroup)?.removeView(it) }
+            hostedWidget = view
+            activeWidgetId = id
+            pendingWidgetId = null
+            widgetStatus = "Widget creado: ${info.provider.flattenToShortString()} · ${info.loadLabel(packageManager)} · ${info.minWidth}×${info.minHeight} dp. Si el área sigue vacía, exporta el informe."
+        } catch (error: Exception) {
+            widgetStatus = "Error al crear/mostrar widgetId=$id: ${error.javaClass.simpleName}: ${error.message}"
             widgetHost.deleteAppWidgetId(id)
             pendingWidgetId = null
-            return
+            hostedWidget = null
         }
-        hostedWidget?.let { (it.parent as? ViewGroup)?.removeView(it) }
-        hostedWidget = widgetHost.createView(this, id, info).also { it.setAppWidget(id, info) }
-        activeWidgetId = id
-        pendingWidgetId = null
     }
 
     private fun removeHostedWidget() {
