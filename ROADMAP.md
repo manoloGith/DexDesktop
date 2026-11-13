@@ -42,10 +42,11 @@ La clasificación puede cambiar tras pruebas en dispositivos y versiones concret
 
 **Trabajo**
 - Completar la APK de diagnóstico y corregir su compilación.
-- Identificar modelo, Android, One UI, pantallas y características disponibles.
+- Inventariar capacidades de Android, pantallas y características disponibles. Los informes originales se mantienen fuera del repositorio; solo se documentan resultados agregados y anónimos.
 - Inventariar aplicaciones iniciables y proveedores de widgets.
 - Probar en el teléfono y con monitor externo: Samsung DeX, teclado, ratón, resolución, densidad y cambios de pantalla.
-- Ejecutar pruebas manuales de ventanas, movimiento, redimensionado, minimizar/maximizar y Snap.
+- Ejecutar pruebas manuales de ventanas: mover, redimensionar, minimizar, maximizar, restaurar y Snap.
+- Separar las pruebas de gestión nativa de ventanas DeX de cualquier supuesto control de ventanas externas desde DexDesktop.
 - Investigar qué APIs públicas o integraciones oficiales permiten cada comportamiento.
 - Clasificar cada requisito V1–V5 y documentar evidencias, limitaciones y alternativas.
 
@@ -332,9 +333,17 @@ La clasificación puede cambiar tras pruebas en dispositivos y versiones concret
 
 - [x] Repositorio creado y rama `develop` disponible.
 - [x] Estructura inicial del proyecto Android y pipeline de compilación añadidos.
-- [ ] Fase 0: diagnóstico compilado, instalado y validado en el dispositivo real.
-- [ ] Fase 0: pruebas en Samsung DeX y monitor externo.
+- [x] Fase 0: comparación inicial de los escenarios móvil y pantalla externa/DeX, con resultados agregados y sin identificadores del dispositivo.
+- [x] Fase 0: detección de una pantalla en modo móvil y dos en el escenario con pantalla externa.
+- [x] Fase 0: estado de multi-ventana observado como inactivo en modo móvil y activo en el escenario DeX.
+- [x] Fase 0: inventario de proveedores de widgets disponible en ambos escenarios (34 en cada informe).
+- [ ] Fase 0: APK de diagnóstico ampliada con registro interactivo de pruebas de gestión de ventanas y compilación verificada.
+- [ ] Fase 0: probar mover, redimensionar, minimizar, maximizar/restaurar y Snap en DeX.
+- [ ] Fase 0: probar el comportamiento de ventanas de aplicaciones externas y distinguir controles del sistema frente a capacidades propias.
+- [ ] Fase 0: crear y mostrar un widget real mediante AppWidgetHost.
 - [ ] Fase 0: matriz de viabilidad aprobada.
 - [ ] Fases del producto definitivo: pendientes de implementación.
 
-**Nota:** el código de diagnóstico actual es provisional y no debe confundirse con la aplicación de escritorio final. La decisión de alcance de las fases 5 y 6 dependerá especialmente de las pruebas reales y de las APIs disponibles.
+**Privacidad de las pruebas:** no se guardan en este repositorio informes JSON originales, modelo del teléfono, identificadores, número de compilación ni otros datos identificativos. Los resultados publicados aquí son agregados: el escenario móvil registró una pantalla y multi-ventana inactiva; el escenario con pantalla externa registró dos pantallas y multi-ventana activa; ambos informes detectaron 34 proveedores de widgets.
+
+**Nota:** el código de diagnóstico actual es provisional y no debe confundirse con la aplicación de escritorio final. La comparación de pantallas y el estado multi-ventana son observaciones preliminares; todavía falta probar las acciones de gestión de ventanas, los widgets reales y la interacción con aplicaciones externas.
