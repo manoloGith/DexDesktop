@@ -22,64 +22,142 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import org.json.JSONArray
 import org.json.JSONObject
+
+private data class ManualTest(
+    val id: String,
+    val title: String,
+    val instruction: String
+)
+
+private val manualTests = listOf(
+    ManualTest("externalDisplay", "Pantalla externa", "Conecta el monitor USB-C/HDMI y comprueba que aparece como una pantalla adicional."),
+    ManualTest("desktopMode", "Samsung DeX", "Activa Samsung DeX y comprueba que el escritorio aparece en el monitor externo."),
+    ManualTest("freeformWindows", "Ventana flotante", "Abre esta aplicación en una ventana flotante desde DeX o desde la multitarea."),
+    ManualTest("windowMove", "Mover ventana", "En DeX, arrastra la barra de título de esta aplicación y comprueba que puedes moverla por el monitor."),
+    ManualTest("windowResize", "Redimensionar ventana", "Arrastra un borde o una esquina de esta ventana y comprueba si puedes cambiar su tamaño."),
+    ManualTest("windowMinimizeRestore", "Minimizar y restaurar", "Minimiza esta ventana desde los controles de DeX y vuelve a abrirla desde la barra de tareas."),
+    ManualTest("windowMaximizeRestore", "Maximizar y restaurar", "Maximiza esta ventana y después restáurala a su tamaño anterior."),
+    ManualTest("windowSnap", "Snap / ajuste", "Prueba las zonas o mecanismos de ajuste de ventanas que ofrece DeX."),
+    ManualTest("externalAppWindows", "Ventanas de otras aplicaciones", "Abre otra aplicación Android (por ejemplo, Ajustes) y comprueba qué controles de ventana ofrece DeX. Esta prueba evalúa el sistema, no un control directo de DexDesktop."),
+    ManualTest("widgets", "Widgets reales", "La detección de proveedores está disponible; añadir y mostrar un widget real mediante AppWidgetHost se validará en una fase posterior.")
+)
 
 class MainActivity : ComponentActivity() {
     private var report by mutableStateOf<JSONObject?>(null)
+
     private val saveReport = registerForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
         val data = report ?: return@registerForActivityResult
         if (uri != null) contentResolver.openOutputStream(uri)?.use {
             it.write(data.toString(2).toByteArray(Charsets.UTF_8))
         }
     }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         report = Diagnostics.collect(this, this)
         setContent {
             MaterialTheme {
                 Surface(Modifier.fillMaxSize()) {
-                    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Column(
+                        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
                         Text("DexDesktop · Diagnóstico", style = MaterialTheme.typography.headlineMedium)
-                        Text("Inventario automático del dispositivo y preparación de pruebas reales en Samsung DeX.")
+                        Text("Inventario automático y pruebas funcionales de pantallas y ventanas.")
+
                         val device = report?.optJSONObject("device")
+                        val capabilities = report?.optJSONObject("capabilities")
                         Card(Modifier.fillMaxWidth()) {
                             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                 Text("Dispositivo", style = MaterialTheme.typography.titleLarge)
                                 Text("${device?.optString("manufacturer")} ${device?.optString("model")}")
                                 Text("Android ${device?.optString("androidRelease")} · API ${device?.optInt("sdkInt")}")
-                                Text("Pantallas: ${report?.optJSONArray("displays")?.length() ?: 0}")
+                                Text("Pantallas detectadas: ${report?.optJSONArray("displays")?.length() ?: 0}")
                                 Text("Apps iniciables: ${report?.optJSONArray("launchableApps")?.length() ?: 0}")
                                 Text("Proveedores de widgets: ${report?.optJSONArray("widgetProviders")?.length() ?: 0}")
                             }
                         }
+
                         Card(Modifier.fillMaxWidth()) {
                             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                                 Text("Capacidades preliminares", style = MaterialTheme.typography.titleLarge)
-                                Text("Freeform declarado: ${report?.optJSONObject("capabilities")?.optBoolean("freeformFeatureDeclared")}")
-                                Text("Esta actividad está en multi-ventana: ${report?.optJSONObject("capabilities")?.optBoolean("activityCurrentlyInMultiWindow")}")
-                                Text("Esto no demuestra que podamos controlar ventanas de otras aplicaciones.")
+                                Text("Freeform declarado: ${capabilities?.optBoolean("freeformFeatureDeclared")}")
+                                Text("Actividad en multi-ventana: ${capabilities?.optBoolean("activityCurrentlyInMultiWindow")}")
+                                Text("Actividad redimensionable: ${capabilities?.optBoolean("resizableActivity")}")
+                                Text("Estas señales no demuestran que DexDesktop pueda controlar ventanas de otras aplicaciones.")
                             }
                         }
-                        Text("Pruebas manuales pendientes", style = MaterialTheme.typography.titleLarge)
-                        Text("1. Conecta el monitor externo y actualiza el informe.\n2. Activa Samsung DeX y exporta otro informe.\n3. Prueba mover y redimensionar esta ventana.\n4. Prueba minimizar, maximizar y Snap.\n5. Anota qué funciones ofrece el sistema.")
+
+                        Text("Pruebas funcionales", style = MaterialTheme.typography.titleLarge)
+                        Text("Realiza cada acción en el teléfono o en DeX y marca el resultado. Los resultados se conservan al actualizar el inventario y se incluyen en el JSON exportado.")
+                        manualTests.forEach { test ->
+                            val status = getTestStatus(report, test.id)
+                            Card(Modifier.fillMaxWidth()) {
+                                Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Text(test.title, style = MaterialTheme.typography.titleMedium)
+                                    Text(test.instruction, style = MaterialTheme.typography.bodyMedium)
+                                    Text("Resultado: ${statusLabel(status)}", style = MaterialTheme.typography.labelLarge)
+                                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                        Button(onClick = { markTest(test.id, "PASS") }) { Text("Correcto") }
+                                        Button(onClick = { markTest(test.id, "FAIL") }) { Text("Falla") }
+                                        Button(onClick = { markTest(test.id, "NOT_TESTED") }) { Text("Pendiente") }
+                                    }
+                                }
+                            }
+                        }
+
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Button(onClick = { report = Diagnostics.collect(this@MainActivity, this@MainActivity) }) {
-                                Text("Actualizar")
-                            }
                             Button(onClick = {
-                                report = Diagnostics.collect(this@MainActivity, this@MainActivity)
-                                saveReport.launch("dexdesktop-diagnostic.json")
-                            }) { Text("Exportar JSON") }
+                                report = Diagnostics.collect(this@MainActivity, this@MainActivity, report)
+                            }) { Text("Actualizar inventario") }
+                            Button(onClick = { saveReport.launch("dexdesktop-diagnostic.json") }) {
+                                Text("Exportar JSON")
+                            }
                         }
-                        Text("Las pruebas manuales permanecen en estado NOT_TESTED hasta verificarlas en el teléfono.")
+
+                        Text(
+                            "Importante: las pruebas de mover, redimensionar, minimizar, maximizar y Snap registran el comportamiento que ofrece Android/DeX a esta ventana. No prueban que DexDesktop pueda manipular directamente ventanas de otras aplicaciones.",
+                            style = MaterialTheme.typography.bodySmall
+                        )
                     }
                 }
             }
         }
     }
+
+    private fun markTest(id: String, status: String) {
+        val updated = report?.let { JSONObject(it.toString()) } ?: return
+        val tests = updated.optJSONArray("manualTests") ?: JSONArray()
+        for (index in 0 until tests.length()) {
+            val item = tests.optJSONObject(index) ?: continue
+            if (item.optString("id") == id) {
+                item.put("status", status)
+                break
+            }
+        }
+        updated.put("manualTests", tests)
+        report = updated
+    }
+
     override fun onResume() {
         super.onResume()
-        report = Diagnostics.collect(this, this)
+        report = Diagnostics.collect(this, this, report)
     }
+}
+
+private fun getTestStatus(report: JSONObject?, id: String): String {
+    val tests = report?.optJSONArray("manualTests") ?: return "NOT_TESTED"
+    for (index in 0 until tests.length()) {
+        val item = tests.optJSONObject(index) ?: continue
+        if (item.optString("id") == id) return item.optString("status", "NOT_TESTED")
+    }
+    return "NOT_TESTED"
+}
+
+private fun statusLabel(status: String): String = when (status) {
+    "PASS" -> "CORRECTO"
+    "FAIL" -> "NO FUNCIONA"
+    else -> "PENDIENTE"
 }
