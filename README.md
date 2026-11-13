@@ -2,27 +2,26 @@
 
 Proyecto Android para validar y desarrollar un entorno de escritorio sobre Android, con especial atención a Samsung DeX y monitores externos.
 
-## Objetivo inmediato
+## Primera entrega: diagnóstico
 
-La primera entrega será una APK de diagnóstico. Antes de construir el launcher definitivo, comprobará en el dispositivo real qué capacidades están disponibles y documentará qué funciona, qué requiere integración del fabricante y qué no puede hacerse con una aplicación Android normal.
+La APK inicial recoge información del dispositivo, pantallas, aplicaciones iniciables y proveedores de widgets. También genera un informe JSON y prepara pruebas manuales para DeX, ventanas flotantes y Snap.
 
-## Enfoque técnico
+**Importante:** es un prototipo de diagnóstico, no el launcher definitivo. No certifica que se puedan controlar ventanas de otras aplicaciones.
 
-- Kotlin y Android.
-- Jetpack Compose y Material 3 para la interfaz.
-- Android AppWidgetHost para evaluar widgets de terceros.
-- Room o DataStore para persistencia cuando sea necesario.
-- APIs públicas de Android como primera opción.
-- Integración específica de Samsung/DeX solo cuando esté documentada y sea viable.
+## Tecnologías
+- Kotlin
+- Jetpack Compose / Material 3
+- Android DisplayManager
+- Android AppWidgetManager (inventario de proveedores)
+- GitHub Actions
 
-## Principio de validación
+## Compilar
+Requisitos: JDK 17 y Gradle 8.9.
 
-No se considerará una función compatible solo porque exista una API. Se distinguirán las comprobaciones automáticas de las pruebas manuales y se registrarán las evidencias en informes JSON y HTML.
+```bash
+gradle --no-daemon :app:assembleDebug
+```
 
-## Dispositivo de pruebas
+APK: `app/build/outputs/apk/debug/app-debug.apk`.
 
-El modelo exacto, versión de Android, One UI y pantallas conectadas se detectarán en tiempo de ejecución. No se fijará el modelo en el código.
-
-## Estado
-
-Repositorio inicializado. La APK de diagnóstico y su flujo de compilación se incorporarán en la siguiente fase.
+Consulta [docs/VALIDATION_SCOPE.md](docs/VALIDATION_SCOPE.md).
