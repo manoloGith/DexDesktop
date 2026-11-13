@@ -1,5 +1,7 @@
 # DexDesktop
 
+> 📌 **[ABRIR ROADMAP DEL PROYECTO](ROADMAP.md)** — fases, estado actual, próximos pasos y limitaciones.
+
 Proyecto Android para desarrollar un entorno de escritorio sobre Android, con especial atención a Samsung DeX y monitores externos.
 
 ## Documentación del proyecto
