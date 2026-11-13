@@ -4,4 +4,4 @@ dependencyResolutionManagement {
     repositories { google(); mavenCentral() }
 }
 rootProject.name = "DexDesktop"
-include(":app")
+include(":app", ":desktop")
