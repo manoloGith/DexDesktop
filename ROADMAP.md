@@ -341,8 +341,8 @@ La clasificación puede cambiar tras pruebas en dispositivos y versiones concret
 - [x] Fase 0: pruebas de mover, redimensionar, minimizar/restaurar, maximizar/restaurar y Snap en DeX (resultado PASS registrado en el informe de diagnóstico).
 - [x] Fase 0: prueba de gestión de ventanas de aplicaciones externas mediante los controles nativos de DeX (PASS registrado). Esto valida el comportamiento del sistema, no control directo desde DexDesktop.
 - [x] Fase 0: probar el selector del sistema y el flujo de alojamiento de widgets; el selector detecta proveedores, pero la prueba real de visualización ha fallado y queda pendiente de diagnóstico.
-- [ ] Fase 0: matriz de viabilidad aprobada.
-- [ ] Fases del producto definitivo: pendientes de implementación.
+- [ ] Fase 0: matriz de viabilidad aprobada (se completará progresivamente; widgets quedan fuera del camino crítico inicial).
+- [ ] Fase 1: arquitectura definitiva, persistencia y ciclo de vida pendientes.\n- [x] Inicio de Fase 2: módulo de aplicación real separado del diagnóstico, primera superficie de escritorio, barra superior, Dock, menú de aplicaciones y lanzamiento de apps Android.\n- [ ] Fase 2: iconos reales, organización persistente, adaptación a distintos monitores y pruebas visuales en DeX pendientes.
 
 **Decisión de producto — interfaz:** DexDesktop es una aplicación para modo escritorio Android, no un launcher móvil adaptable. Samsung DeX es la primera plataforma objetivo, pero las capas de interfaz y gestión deben evitar dependencias innecesarias de Samsung para facilitar su adaptación a otros entornos Android desktop. No se diseñarán pantallas móviles ni se reducirá el escritorio a una vista de teléfono; las pruebas sin monitor solo sirven para diagnóstico técnico.
 
@@ -351,3 +351,10 @@ La clasificación puede cambiar tras pruebas en dispositivos y versiones concret
 **Resultados funcionales registrados (diagnóstico más reciente):** PASS en pantalla externa, Samsung DeX, ventana flotante, movimiento, redimensionado, minimizar/restaurar, maximizar/restaurar, Snap y ventanas de aplicaciones externas mediante DeX (9 pruebas PASS). La prueba de widgets está marcada FAIL: se detectan 34 proveedores y el usuario pudo seleccionar un widget, pero no llegó a mostrarse. Por tanto, el selector funciona al menos parcialmente y el fallo está después de la selección; todavía no se ha aislado si ocurre al recuperar la información del proveedor, configurar, crear o adjuntar la vista. Estas pruebas validan el comportamiento del sistema en el dispositivo ensayado, no el control directo de ventanas externas desde DexDesktop.
 
 **Nota:** el código de diagnóstico es provisional y no debe confundirse con la aplicación de escritorio final. La fase 0 aún necesita validar widgets reales mediante AppWidgetHost y completar la matriz de viabilidad.
+
+
+## Decisión de priorización — noviembre de 2026
+
+Se aplaza la investigación adicional de widgets. La detección de proveedores está comprobada, pero la visualización mediante AppWidgetHost no se considera un requisito de entrada para construir el escritorio. Se retomará cuando la superficie principal, el catálogo de aplicaciones y el motor de ventanas propias estén asentados.
+
+La aplicación real comienza en el módulo independiente `desktop`; el módulo `app` permanece como diagnóstico. La primera entrega de `desktop` es una base funcional de escritorio con menú de aplicaciones y lanzamiento de actividades Android. No debe confundirse con una versión terminada: la persistencia, ventanas internas completas, adaptación a monitores y pruebas prolongadas aún están pendientes.
