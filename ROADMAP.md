@@ -340,7 +340,7 @@ La clasificación puede cambiar tras pruebas en dispositivos y versiones concret
 - [x] Fase 0: APK de diagnóstico ampliada con registro interactivo de pruebas de gestión de ventanas y compilación CI correcta.
 - [x] Fase 0: pruebas de mover, redimensionar, minimizar/restaurar, maximizar/restaurar y Snap en DeX (resultado PASS registrado en el informe de diagnóstico).
 - [x] Fase 0: prueba de gestión de ventanas de aplicaciones externas mediante los controles nativos de DeX (PASS registrado). Esto valida el comportamiento del sistema, no control directo desde DexDesktop.
-- [ ] Fase 0: crear y mostrar un widget real mediante AppWidgetHost.
+- [x] Fase 0: probar el selector del sistema y el flujo de alojamiento de widgets; el selector detecta proveedores, pero la prueba real de visualización ha fallado y queda pendiente de diagnóstico.
 - [ ] Fase 0: matriz de viabilidad aprobada.
 - [ ] Fases del producto definitivo: pendientes de implementación.
 
@@ -348,6 +348,6 @@ La clasificación puede cambiar tras pruebas en dispositivos y versiones concret
 
 **Privacidad de las pruebas:** no se guardan en este repositorio informes JSON originales, modelo del teléfono, identificadores, número de compilación ni otros datos identificativos. Los resultados publicados aquí son agregados: el escenario móvil registró una pantalla y multi-ventana inactiva; el escenario con pantalla externa registró dos pantallas y multi-ventana activa; ambos informes detectaron 34 proveedores de widgets.
 
-**Resultados funcionales registrados:** el informe de diagnóstico más reciente marca como PASS la apertura de la app en ventana flotante, movimiento, redimensionado, minimizar/restaurar, maximizar/restaurar, Snap y gestión de ventanas de otras aplicaciones mediante DeX. Son pruebas del comportamiento de DeX en el escenario probado; no demuestran que DexDesktop pueda controlar directamente ventanas externas. La prueba de creación y visualización de un widget real mediante AppWidgetHost sigue como NOT_TESTED.
+**Resultados funcionales registrados (diagnóstico más reciente):** PASS en pantalla externa, Samsung DeX, ventana flotante, movimiento, redimensionado, minimizar/restaurar, maximizar/restaurar, Snap y ventanas de aplicaciones externas mediante DeX (9 pruebas PASS). La prueba de widgets está marcada FAIL: se detectan 34 proveedores y el usuario pudo seleccionar un widget, pero no llegó a mostrarse. Por tanto, el selector funciona al menos parcialmente y el fallo está después de la selección; todavía no se ha aislado si ocurre al recuperar la información del proveedor, configurar, crear o adjuntar la vista. Estas pruebas validan el comportamiento del sistema en el dispositivo ensayado, no el control directo de ventanas externas desde DexDesktop.
 
 **Nota:** el código de diagnóstico es provisional y no debe confundirse con la aplicación de escritorio final. La fase 0 aún necesita validar widgets reales mediante AppWidgetHost y completar la matriz de viabilidad.
