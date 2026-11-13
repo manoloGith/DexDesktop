@@ -1,360 +1,323 @@
-# DexDesktop — Roadmap de la aplicación de escritorio
+# DexDesktop — Roadmap rediseñado
 
-> **Este documento describe el producto final**, no la APK temporal de diagnóstico. La APK de diagnóstico es una herramienta de la Fase 0 para comprobar el dispositivo y reducir riesgos antes de comprometer el diseño definitivo.
+> Este documento define el producto final y el orden de implementación. La APK del módulo `app` es exclusivamente de diagnóstico; la aplicación de escritorio real se desarrolla en `desktop`.
 
-## Visión del producto
+## Visión y decisiones de producto
 
-Construir una aplicación de escritorio para Android, diseñada desde el inicio para ejecutarse en modo escritorio sobre una pantalla externa. Samsung DeX será la primera plataforma de referencia, con una arquitectura adaptable a otros entornos de escritorio Android. La interfaz principal será siempre la de escritorio: barra superior, Dock, escritorio configurable, widgets y acceso fluido a aplicaciones. No se desarrollará una interfaz móvil como experiencia alternativa del producto.
+DexDesktop será un entorno de escritorio para Android, diseñado para pantallas externas y uso con ratón y teclado. Samsung DeX es la primera plataforma de referencia, pero se evitarán dependencias innecesarias de Samsung para facilitar la adaptación a otros entornos Android desktop.
 
-La prioridad es ofrecer una experiencia real y útil, no una maqueta visual. Las aplicaciones y widgets deben ser los de Android siempre que la plataforma lo permita. Las funciones que Android no permita controlar desde una aplicación normal se identificarán claramente y se resolverán mediante integración del fabricante, alternativas parciales o cambios de alcance.
+- **No habrá interfaz móvil de producto.** El modo móvil solo se utilizará para instalar, configurar o diagnosticar técnicamente.
+- La experiencia principal incluirá escritorio, barra superior, Dock, menú de aplicaciones, ventanas propias, organización de espacios y accesos directos.
+- El Dock tendrá auto-ocultación inteligente como comportamiento básico: se ocultará ante aplicaciones externas maximizadas o a pantalla completa y reaparecerá cuando el puntero se acerque al borde inferior.
+- DexDesktop controlará completamente sus propias ventanas. Las ventanas de otras aplicaciones seguirán bajo el control de Android/DeX salvo que exista una integración soportada y probada.
+- Root y Shizuku no serán requisitos para instalar, iniciar ni utilizar las funciones normales.
+- Los widgets Android reales quedan aplazados: no bloquearán el desarrollo del escritorio ni del Dock.
 
-## Principios y límites técnicos
+## Modelo de capacidades y privilegios
 
-1. **Sin root como objetivo principal.** La versión estándar debe funcionar como una aplicación Android instalable y, cuando proceda, como launcher predeterminado.
-2. **No fingir capacidades del sistema.** Una ventana dibujada dentro de DexDesktop no equivale a controlar la ventana nativa de otra aplicación.
-3. **Separar los tipos de ventana:**
-   - Ventanas propias: contenido y paneles que DexDesktop controla directamente.
-   - Aplicaciones externas: se lanzan mediante Android y el sistema/fabricante decide su gestión de ventanas.
-   - Integraciones especiales: solo se incorporan si existe una API soportada y se valida en el hardware real.
-4. **Widgets reales.** Evaluar y utilizar `AppWidgetHost` para alojar widgets de proveedores instalados, respetando configuración, permisos y ciclo de vida.
-5. **Diseño adaptable.** Diferenciar modo teléfono/tablet y modo escritorio con monitor externo.
-6. **Compatibilidad demostrada.** Cada función se marcará como validada, parcialmente validada, experimental o no disponible. La existencia de una API no será suficiente para darla por terminada.
+Se distinguirán tres niveles para no confundir una función técnicamente posible con una función que pueda utilizar cualquier usuario.
 
-### Clases de viabilidad
-
-| Código | Significado |
-|---|---|
-| V1 | Implementable con APIs públicas de Android. |
-| V2 | Necesita integración específica del fabricante o de Samsung DeX. |
-| V3 | Necesita privilegios de sistema, root o modificar el sistema operativo. |
-| V4 | Viable parcialmente, con limitaciones funcionales. |
-| V5 | No viable en una app Android normal con las APIs disponibles. |
-
-La clasificación puede cambiar tras pruebas en dispositivos y versiones concretas. No se asumirá que una función V2 o V3 está disponible hasta demostrarlo.
-
----
-
-## Fases de desarrollo
-
-### Fase 0 — Diagnóstico y decisión de viabilidad
-
-**Objetivo:** determinar qué puede hacer realmente el dispositivo de pruebas y qué arquitectura es viable.
-
-**Trabajo**
-- Completar la APK de diagnóstico y corregir su compilación.
-- Inventariar capacidades de Android, pantallas y características disponibles. Los informes originales se mantienen fuera del repositorio; solo se documentan resultados agregados y anónimos.
-- Inventariar aplicaciones iniciables y proveedores de widgets.
-- Probar la aplicación en modo escritorio con monitor externo: Samsung DeX como referencia inicial, teclado, ratón, resolución, densidad, ventanas y cambios de pantalla. El modo móvil solo podrá utilizarse para tareas técnicas de instalación o diagnóstico, nunca como objetivo de interfaz.
-- Ejecutar pruebas manuales de ventanas: mover, redimensionar, minimizar, maximizar, restaurar y Snap.
-- Separar las pruebas de gestión nativa de ventanas DeX de cualquier supuesto control de ventanas externas desde DexDesktop.
-- Investigar qué APIs públicas o integraciones oficiales permiten cada comportamiento.
-- Clasificar cada requisito V1–V5 y documentar evidencias, limitaciones y alternativas.
-
-**Entregables**
-- APK de diagnóstico instalable.
-- Informes JSON y HTML del dispositivo, cuando se complete esa función.
-- Matriz de viabilidad por requisito.
-- Decisión documentada: continuar, continuar con limitaciones, rediseñar o detener una función.
-
-**Criterio de salida**
-- Compilación reproducible y probada.
-- Pruebas en el dispositivo real, tanto en modo móvil como con DeX/monitor.
-- Ninguna función crítica se considera viable sin evidencia suficiente.
-
-### Fase 1 — Base del producto y arquitectura
-
-**Objetivo:** crear la aplicación definitiva con una base mantenible, separada del código de diagnóstico.
-
-**Trabajo**
-- Definir módulos y arquitectura por capas.
-- Configurar Kotlin, Jetpack Compose y Material 3.
-- Crear gestión de configuración y persistencia con DataStore; usar Room si el volumen y las relaciones de datos lo justifican.
-- Gestionar ciclo de vida, cambios de configuración, orientación, tamaños y pantallas.
-- Preparar registro de errores, pruebas automatizadas y compilaciones CI.
-- Definir una única experiencia de escritorio, con adaptación a distintos monitores y entornos Android desktop. No crear un perfil de interfaz móvil.
-
-**Entregables**
-- Estructura modular de la aplicación.
-- Navegación y tema base.
-- Persistencia de preferencias.
-- Pipeline de compilación y pruebas.
-
-**Criterio de salida**
-- La app compila en CI, se instala y conserva configuración tras reinicios.
-- Cambiar entre pantalla móvil y externa no provoca pérdida de estado ni bloqueos.
-
-### Fase 2 — Escritorio visual y launcher
-
-**Objetivo:** implementar la superficie principal del escritorio.
-
-**Trabajo**
-- Implementar el escritorio con fondo configurable.
-- Crear barra superior con hora, fecha, estado e indicadores disponibles.
-- Crear Dock inferior o lateral configurable, sin reproducir una barra de tareas de Windows.
-- Añadir accesos directos, carpetas y menú de aplicaciones.
-- Permitir seleccionar DexDesktop como launcher predeterminado cuando el dispositivo lo admita.
-- Adaptar distribución, escala, márgenes y áreas de trabajo a monitores, resoluciones y densidades distintas, priorizando ratón y teclado sin excluir pantallas táctiles de escritorio.
-
-**Entregables**
-- Escritorio funcional.
-- Barra superior.
-- Dock configurable.
-- Lanzador y organización básica de aplicaciones.
-
-**Criterio de salida**
-- Se puede navegar por el escritorio, abrir aplicaciones y personalizar los elementos básicos.
-- La interfaz se adapta correctamente a las resoluciones probadas.
-
-### Fase 3 — Catálogo y lanzamiento de aplicaciones Android
-
-**Objetivo:** integrar las aplicaciones instaladas sin crear copias ni simulaciones.
-
-**Trabajo**
-- Consultar actividades lanzables respetando las restricciones de visibilidad de paquetes de Android.
-- Mostrar icono, nombre y accesos directos disponibles.
-- Buscar, ordenar y agrupar aplicaciones.
-- Lanzar aplicaciones mediante intents.
-- Gestionar aplicaciones no disponibles, permisos y errores de lanzamiento.
-- Detectar y mostrar las capacidades de ventana que el sistema ofrece, sin prometer control sobre ellas.
-
-**Entregables**
-- Menú de aplicaciones.
-- Búsqueda y favoritos.
-- Apertura de aplicaciones Android reales.
-- Gestión de errores y estados.
-
-**Criterio de salida**
-- Las aplicaciones visibles se pueden iniciar de forma fiable y la lista se actualiza al instalar o desinstalar apps.
-
-### Fase 4 — Motor de ventanas propias
-
-**Objetivo:** crear ventanas gestionadas por DexDesktop para sus propios paneles y herramientas.
-
-**Trabajo**
-- Modelo de ventana con identificador, posición, tamaño, estado y orden Z.
-- Barra de título propia con icono, título y controles.
-- Mover, redimensionar, enfocar, minimizar, maximizar, restaurar y cerrar ventanas propias.
-- Gestión de ventanas superpuestas y límites de pantalla.
-- Atajos de teclado y soporte de ratón.
-- Persistencia opcional de posición y tamaño.
-
-**Entregables**
-- Gestor de ventanas internas.
-- Controles y comportamiento coherente.
-- Pruebas de interacción táctil, ratón y teclado.
-
-**Criterio de salida**
-- Varias ventanas propias pueden convivir, moverse, cambiar de tamaño y restaurarse sin errores.
-
-**Límite importante:** este motor controla ventanas dibujadas dentro de DexDesktop. No convierte automáticamente aplicaciones externas en ventanas hijas ni permite inyectarles una barra de título.
-
-### Fase 5 — Integración de aplicaciones externas y Samsung DeX
-
-**Objetivo:** conseguir la mejor convivencia posible entre DexDesktop y las ventanas nativas de otras aplicaciones.
-
-**Trabajo**
-- Validar el lanzamiento de apps externas en modo escritorio y su comportamiento real en DeX.
-- Comprobar qué opciones de ventana ofrece One UI/DeX: mover, redimensionar, maximizar, minimizar, pantalla dividida y restauración.
-- Evaluar APIs oficiales y mecanismos soportados por Samsung.
-- Investigar límites de launcher, modo multi-ventana, actividad redimensionable y pantallas externas.
-- Diseñar una experiencia coherente cuando el control pertenezca a DeX y no a DexDesktop.
-- Documentar qué controles se pueden ofrecer directamente y cuáles debe realizar el usuario con el sistema.
-
-**Entregables**
-- Matriz de compatibilidad por versión de Android/One UI.
-- Flujo de apertura de aplicaciones externas.
-- Integración Samsung únicamente cuando esté respaldada y probada.
-- Alternativas de interfaz para capacidades no disponibles.
-
-**Criterio de salida**
-- Aplicaciones externas probadas en el dispositivo real.
-- No se presenta como función propia ningún control que realmente gestione el sistema operativo.
-
-**Riesgo crítico:** una app Android convencional no dispone de una API pública universal para imponer barras de título, mover, redimensionar o minimizar arbitrariamente ventanas de otras aplicaciones. Si DeX no expone una integración soportada, esta parte tendrá que limitarse a las funciones nativas del sistema.
-
-### Fase 6 — Snap Layouts y organización de ventanas
-
-**Objetivo:** ofrecer distribución rápida de ventanas.
-
-**Trabajo**
-- Diseñar plantillas de distribución: mitad, tercios, cuadrantes y diseños configurables.
-- Implementar Snap completo para ventanas propias.
-- Evaluar si las ventanas externas pueden organizarse mediante funciones nativas de DeX o integraciones oficiales.
-- Añadir zonas de acoplamiento y previsualización donde sea técnicamente posible.
-- Proporcionar alternativas cuando una ventana externa no pueda ser controlada.
-
-**Entregables**
-- Snap para ventanas propias.
-- Integración o guía de uso de las opciones nativas disponibles para apps externas.
-- Matriz de compatibilidad y limitaciones.
-
-**Criterio de salida**
-- Las distribuciones propias funcionan con ratón y táctil.
-- Las externas solo se consideran soportadas si la prueba real demuestra que se pueden organizar.
-
-### Fase 7 — Widgets Android reales
-
-**Objetivo:** colocar widgets de aplicaciones instaladas en el escritorio.
-
-**Trabajo**
-- Implementar el ciclo de vida de `AppWidgetHost` y `AppWidgetManager`.
-- Solicitar y gestionar identificadores de widget.
-- Mostrar el selector de proveedores disponibles.
-- Ejecutar el flujo de configuración de cada widget.
-- Alojar, redimensionar y eliminar widgets.
-- Persistir su ubicación y tamaño.
-- Gestionar actualización, permisos, restauración y proveedores que fallen.
-- Probar widgets interactivos y su compatibilidad en pantallas externas.
-
-**Entregables**
-- Selector de widgets.
-- Escritorio con widgets reales.
-- Gestión de tamaño, posición y configuración.
-- Persistencia del diseño.
-
-**Criterio de salida**
-- Varios widgets de proveedores distintos se pueden añadir, configurar, utilizar, mover y eliminar.
-- Se valida su comportamiento tras cerrar y reiniciar la app.
-
-### Fase 8 — Escritorios virtuales y espacios de trabajo
-
-**Objetivo:** organizar ventanas, accesos y widgets en distintos espacios.
-
-**Trabajo**
-- Crear espacios de trabajo internos de DexDesktop.
-- Asociar a cada espacio ventanas propias, widgets y accesos.
-- Añadir cambio de escritorio mediante Dock, gestos y atajos.
-- Guardar y restaurar el estado de cada espacio.
-- Evaluar si existe integración oficial con escritorios virtuales del sistema o de DeX.
-
-**Entregables**
-- Varios escritorios virtuales internos.
-- Cambio rápido y persistencia.
-- Reglas de organización por espacio.
-
-**Criterio de salida**
-- Los espacios propios mantienen su contenido y estado al cambiar entre ellos.
-
-**Límite:** los escritorios virtuales internos de DexDesktop no equivalen a escritorios virtuales globales de Android ni cambian por sí mismos el espacio de trabajo de las aplicaciones externas.
-
-### Fase 9 — Monitores, teclado, ratón y perfiles
-
-**Objetivo:** ofrecer una experiencia robusta en distintos escenarios de uso.
-
-**Trabajo**
-- Detectar conexión/desconexión de pantallas.
-- Adaptar la interfaz a resolución, densidad, orientación y área útil.
-- Gestionar ratón, rueda, botones, foco y hover.
-- Añadir atajos de teclado configurables.
-- Crear perfiles de escritorio por plataforma y configuración de monitor (Samsung DeX inicialmente y otros entornos Android después). No implementar un perfil de interfaz móvil.
-- Restaurar ventanas y distribución tras conectar o desconectar el monitor.
-- Probar adaptadores USB-C/HDMI, hubs y periféricos disponibles.
-
-**Entregables**
-- Perfiles de pantalla.
-- Soporte de ratón y teclado.
-- Restauración de distribución.
-- Pruebas de conexión y desconexión.
-
-**Criterio de salida**
-- La interfaz cambia de perfil sin bloqueos ni pérdida de configuración en los escenarios validados.
-
-### Fase 10 — Personalización, estabilidad y rendimiento
-
-**Objetivo:** pulir la experiencia y preparar una versión utilizable a diario.
-
-**Trabajo**
-- Temas, fondos, transparencias, iconos y tamaños.
-- Configuración de Dock, barra superior, widgets y accesos.
-- Animaciones y transiciones con opción de reducirlas.
-- Optimización de memoria, CPU y consumo energético.
-- Accesibilidad, escalado de texto y navegación por teclado.
-- Gestión de fallos, recuperación y migración de configuración.
-- Pruebas prolongadas y regresión en distintos tamaños de pantalla.
-
-**Entregables**
-- Ajustes completos.
-- Pruebas de rendimiento y estabilidad.
-- Documentación de usuario y solución de problemas.
-
-**Criterio de salida**
-- Sin fallos críticos abiertos; rendimiento y estabilidad aceptables en los dispositivos de referencia.
-
-### Fase 11 — Beta, publicación y mantenimiento
-
-**Objetivo:** distribuir una versión instalable y mantenerla.
-
-**Trabajo**
-- Generar builds debug y release firmadas correctamente.
-- Configurar versionado y notas de versión.
-- Publicar APK de beta y canal de incidencias.
-- Probar instalación, actualización y migración.
-- Mantener compatibilidad con nuevas versiones de Android y One UI.
-- Documentar funciones experimentales y dispositivos validados.
-
-**Entregables**
-- APK release.
-- Guía de instalación y actualización.
-- Registro de cambios.
-- Matriz de dispositivos y funciones probadas.
-
-**Criterio de salida**
-- Instalación y actualización verificadas en los dispositivos objetivo.
-- Procedimiento de mantenimiento y publicación reproducible.
-
----
-
-## Orden de prioridades del producto
-
-| Prioridad | Funcionalidad | Objetivo |
+| Nivel | Requisitos | Uso previsto |
 |---|---|---|
-| P0 | Diagnóstico y viabilidad | Evitar construir sobre supuestos incorrectos. |
-| P1 | Escritorio, barra superior y Dock | Tener una superficie de escritorio utilizable. |
-| P1 | Catálogo y lanzamiento de apps | Acceder a aplicaciones Android reales. |
-| P1 | Ventanas propias | Gestionar paneles y herramientas de DexDesktop. |
-| P1 | Monitor, teclado y ratón | Usar el escritorio como entorno de trabajo. |
-| P2 | Widgets Android reales | Añadir información y controles de otras apps. |
-| P2 | Snap de ventanas propias | Organizar el espacio de trabajo. |
-| P2 | Escritorios virtuales internos | Separar tareas y espacios. |
-| P3 | Integración avanzada con DeX | Mejorar la gestión de aplicaciones externas si la plataforma lo permite. |
-| P3 | Personalización y publicación | Consolidar y distribuir el producto. |
+| Estándar | APIs públicas y permisos normales concedidos por el usuario | Escritorio, aplicaciones, ventanas propias, preferencias, Dock propio y auto-ocultación cuando la detección disponible sea suficiente |
+| Integración opcional | Servicio de accesibilidad, permiso de superposición y, en funciones experimentales, Shizuku autorizado por ADB | Detección de cambios de ventana, Dock flotante persistente, zona de activación por ratón y pruebas de integración avanzada |
+| Experimental privilegiado | Root o permisos de sistema/fabricante | Solo investigar operaciones que Android o DeX no expongan a una aplicación normal; nunca se prometerán sin prueba en el dispositivo |
 
-## Reglas de gestión del proyecto
+### Qué necesita realmente cada función
 
-- Las fases se desarrollan en orden, pero las tareas independientes pueden avanzar en paralelo si no comprometen la arquitectura.
-- Cada fase debe terminar con código integrado, compilación correcta, pruebas y documentación.
-- No se marca una tarea como terminada por haber escrito el código: debe compilar y superar sus pruebas.
-- Las pruebas de hardware deben indicar dispositivo, versión Android/One UI, modo de pantalla y resultado.
-- Los bloqueos por APIs del sistema deben documentarse con evidencia y propuesta alternativa.
-- No se eliminarán limitaciones conocidas para aparentar compatibilidad.
+| Función | Permiso/API | ¿Shizuku? | ¿Root? |
+|---|---|---:|---:|
+| Escritorio, barra superior y menú de apps | APIs Android normales | No | No |
+| Lanzar aplicaciones instaladas | Intents y visibilidad de paquetes permitida | No | No |
+| Ventanas internas de DexDesktop | Compose y motor propio | No | No |
+| Dock integrado en el escritorio de DexDesktop | UI propia | No | No |
+| Dock flotante sobre otras aplicaciones | `SYSTEM_ALERT_WINDOW` concedido por el usuario | No | No |
+| Detectar cambios de ventana y actividad | Servicio de accesibilidad activado expresamente por el usuario | No | No |
+| Detectar maximización/pantalla completa de apps externas | Eventos de accesibilidad y, cuando sea posible, información de ventanas/pantalla | No en el diseño base | No en el diseño base |
+| Activar el Dock al acercar el ratón al borde | Ventana de superposición pequeña y eventos hover del ratón; requiere validación en DeX | No | No |
+| Ocultar/mostrar el Dock y animarlo | Servicio propio + superposición | No | No |
+| Mover, redimensionar o minimizar ventanas propias | Motor de ventanas interno | No | No |
+| Mover o redimensionar arbitrariamente apps externas | No existe API pública universal para imponerlo | Shizuku puede permitir investigar operaciones concretas, no garantizarlo | Puede ampliar posibilidades, sin garantía universal |
+| Snap de ventanas externas | Funciones nativas de DeX o integración específica validada | Opcional para investigación | Solo si una operación concreta lo exige y se demuestra |
+| Cambiar ajustes protegidos del sistema | Depende del ajuste y de la versión Android | A veces | A veces |
+| Escritorios virtuales internos | Estado y ventanas propios de DexDesktop | No | No |
+| Escritorios virtuales globales del sistema | API oficial si el fabricante la ofrece | No garantizado | No garantizado |
+
+**Importante sobre el Dock y la accesibilidad:** el permiso de superposición y el servicio de accesibilidad son permisos especiales que el usuario activa en Ajustes. No requieren root ni Shizuku. La accesibilidad permitirá observar eventos de ventanas, pero Android no garantiza que todas las aplicaciones o versiones de DeX expongan información suficiente para distinguir siempre maximizada, pantalla completa e inmersiva. Se implementará detección por evidencias disponibles, estados de confianza y un modo alternativo configurable.
+
+**Importante sobre Shizuku:** Shizuku no equivale a root. Permite que una aplicación autorizada solicite determinadas operaciones a través de un servicio iniciado por ADB o root, dentro de los permisos que el sistema conceda. No elimina las restricciones de Android ni convierte automáticamente a DexDesktop en administrador de ventanas. Solo se añadirá cuando una prueba identifique una operación concreta que aporte una mejora real.
+
+**Importante sobre root:** no se diseñará el producto alrededor de root. Si una función solo funciona con root, se etiquetará como opcional/experimental y la experiencia estándar conservará una alternativa o indicará claramente la limitación.
+
+## Fases de desarrollo rediseñadas
+
+### Fase 0 — Diagnóstico de plataforma y viabilidad
+
+**Objetivo:** disponer de evidencias del entorno real antes de depender de capacidades específicas de Android o DeX.
+
+**Trabajo**
+- Mantener la APK de diagnóstico separada del producto.
+- Probar en pantalla externa/DeX las capacidades de ventanas nativas: mover, redimensionar, minimizar, maximizar, restaurar y Snap.
+- Comprobar pantallas, resolución, densidad, teclado, ratón y eventos disponibles.
+- Registrar resultados agregados y anónimos; no subir al repositorio JSON originales ni datos que identifiquen el dispositivo.
+- Completar la matriz de viabilidad por función y distinguir control nativo de DeX frente a control desde DexDesktop.
+- Aplazar las pruebas de widgets; no forman parte del camino crítico.
+
+**Entregables:** APK de diagnóstico, matriz de viabilidad y documentación de límites.
+
+**Salida:** pruebas reproducibles y límites conocidos para el dispositivo de referencia.
+
+**Estado:** las pruebas registradas han validado en DeX las operaciones nativas de ventanas y Snap. Esto demuestra que DeX las realiza, no que DexDesktop pueda controlar directamente ventanas externas.
+
+### Fase 1 — Arquitectura base y permisos opcionales
+
+**Objetivo:** preparar una arquitectura que permita escritorio, servicio persistente y futuras integraciones sin mezclar el diagnóstico con el producto.
+
+**Trabajo**
+- Mantener `:desktop` como aplicación real y `:app` como diagnóstico.
+- Separar módulos/capas: escritorio Compose, modelo de ventanas, catálogo de aplicaciones, preferencias, servicio de Dock y adaptadores de plataforma.
+- Configurar persistencia con DataStore y utilizar Room solo cuando los datos y relaciones lo justifiquen.
+- Definir estados de permisos: superposición, accesibilidad y, en el futuro, conexión opcional con Shizuku.
+- Crear una pantalla de configuración de permisos que explique para qué se solicita cada uno y permita continuar sin conceder permisos opcionales.
+- Preparar pruebas automatizadas, registro de errores y CI.
+
+**Entregables:** arquitectura modular, gestión de preferencias, flujo de permisos y compilación reproducible.
+
+**Salida:** el producto compila y funciona sin Shizuku ni root; los permisos especiales se solicitan solo al activar la función que los necesita.
+
+### Fase 2 — Superficie de escritorio y experiencia principal
+
+**Objetivo:** convertir la primera superficie visual existente en un escritorio utilizable.
+
+**Trabajo**
+- Completar fondo, área de trabajo y barra superior.
+- Completar Dock integrado, menú de aplicaciones, favoritos y accesos directos.
+- Sustituir iconos provisionales por iconos reales de las aplicaciones.
+- Añadir selección, organización y persistencia de iconos y accesos.
+- Adaptar distribución, escala y márgenes a monitores externos y distintas densidades.
+- Diseñar navegación priorizando ratón y teclado.
+
+**Entregables:** escritorio funcional, barra superior, Dock integrado y personalización básica.
+
+**Salida:** escritorio usable en pantalla externa, con preferencias conservadas tras reiniciar.
+
+### Fase 3 — Catálogo y lanzamiento de aplicaciones
+
+**Objetivo:** integrar las aplicaciones Android instaladas de forma fiable.
+
+**Trabajo**
+- Consultar actividades lanzables respetando las reglas de visibilidad de paquetes.
+- Mostrar iconos y nombres reales.
+- Añadir búsqueda, favoritos, ordenación y agrupación.
+- Lanzar aplicaciones mediante intents.
+- Gestionar instalaciones/desinstalaciones y errores.
+- Comprobar el comportamiento de lanzamiento en DeX y en otros entornos compatibles.
+
+**Entregables:** menú de aplicaciones completo y lanzamiento fiable.
+
+**Salida:** aplicaciones visibles iniciables y catálogo actualizado ante cambios.
+
+### Fase 4 — Servicio de escritorio, Dock flotante y auto-ocultación
+
+**Objetivo:** hacer que el Dock acompañe al usuario también cuando trabaja dentro de aplicaciones externas.
+
+**Trabajo**
+- Crear un `AccessibilityService` opcional para observar cambios de ventana, foco y actividad.
+- Crear el servicio/controlador del Dock flotante mediante `WindowManager` y permiso `SYSTEM_ALERT_WINDOW`.
+- Implementar los modos: siempre visible, auto-ocultar y siempre oculto.
+- En auto-ocultar, esconder el Dock cuando una aplicación externa ocupe el estado maximizado/pantalla completa detectado.
+- Crear una zona de activación transparente y estrecha en el borde inferior que responda al hover del ratón.
+- Al entrar el puntero en la zona, mostrar el Dock; al salir, ocultarlo tras un retardo configurable.
+- Evitar que el Dock desaparezca mientras se interactúa con él, se arrastra un elemento o hay un menú abierto.
+- Añadir histéresis/retardo para evitar parpadeos al mover el ratón cerca del borde.
+- No activar el auto-ocultado por ventanas internas de DexDesktop ni mientras el propio escritorio sea la superficie activa.
+- Probar que la zona de activación no bloquee clics ni gestos de las aplicaciones que quedan debajo.
+- Incorporar fallback manual si una aplicación o versión de DeX no proporciona datos fiables sobre maximización o pantalla completa.
+
+**Entregables:** servicio de accesibilidad, Dock flotante, zona hover, modos de visibilidad y ajustes.
+
+**Salida:** en el dispositivo de referencia, el Dock se oculta y reaparece de forma fiable en los escenarios acordados, sin interceptar la interacción normal. La compatibilidad con otros dispositivos se marcará por separado.
+
+**Privilegios:** requiere que el usuario active Accesibilidad y Superposición. No requiere Shizuku ni root.
+
+### Fase 5 — Motor completo de ventanas propias
+
+**Objetivo:** gestionar varias ventanas de DexDesktop como en un escritorio de PC.
+
+**Trabajo**
+- Crear modelo de ventana con identificador, posición, tamaño, estado, foco y orden Z.
+- Implementar barra de título, icono, menú y controles.
+- Permitir mover, redimensionar, minimizar, maximizar, restaurar y cerrar.
+- Añadir Snap de ventanas propias, límites de pantalla y prevención de ventanas fuera del área visible.
+- Añadir atajos de teclado y comportamiento de ratón.
+- Persistir posiciones, tamaños y estados cuando proceda.
+
+**Entregables:** gestor de ventanas internas y conjunto de pruebas de interacción.
+
+**Salida:** varias ventanas propias conviven y se gestionan sin errores.
+
+**Límite:** estas ventanas pertenecen a DexDesktop; no son ventanas nativas de otras aplicaciones.
+
+### Fase 6 — Integración con ventanas externas y Samsung DeX
+
+**Objetivo:** mejorar la convivencia con aplicaciones externas sin atribuirse controles que pertenecen al sistema.
+
+**Trabajo**
+- Probar lanzamiento, foco, maximización, pantalla completa y restauración de aplicaciones externas.
+- Medir qué información expone el servicio de accesibilidad en diferentes estados.
+- Evaluar APIs oficiales de Samsung/Android y documentar su disponibilidad.
+- Investigar mediante un adaptador aislado si Shizuku permite operaciones concretas útiles en el dispositivo de referencia.
+- No incorporar comandos privilegiados hasta demostrar que son estables, reversibles y compatibles.
+- Mantener el control nativo de DeX como mecanismo principal para mover/redimensionar apps externas.
+- Diseñar mensajes y controles que indiquen cuándo una acción debe realizarse desde DeX.
+
+**Entregables:** matriz por versión de Android/One UI, adaptador opcional si aporta una función probada y documentación de límites.
+
+**Salida:** ninguna operación externa se declara soportada sin pruebas reales y repetibles.
+
+**Privilegios:** la observación básica usa Accesibilidad. Shizuku podría ser opcional para pruebas de operaciones concretas. Root solo se consideraría para experimentos aislados; no se promete que resuelva las restricciones de DeX.
+
+### Fase 7 — Snap y organización del espacio de trabajo
+
+**Objetivo:** organizar ventanas de forma rápida y coherente.
+
+**Trabajo**
+- Crear diseños de mitad, tercios, cuadrantes y plantillas personalizadas para ventanas propias.
+- Añadir zonas de acoplamiento, previsualización y atajos.
+- Integrar las opciones nativas de DeX para ventanas externas cuando sea posible.
+- Evaluar automatización opcional solo si existe una API o mecanismo probado.
+- Proporcionar alternativas manuales para aplicaciones externas no controlables.
+
+**Entregables:** Snap completo para ventanas propias y guía/integración validada para las externas.
+
+**Salida:** distribuciones internas fiables; compatibilidad externa documentada por dispositivo.
+
+### Fase 8 — Escritorios virtuales internos
+
+**Objetivo:** separar proyectos y grupos de ventanas dentro de DexDesktop.
+
+**Trabajo**
+- Crear varios espacios internos.
+- Asociar ventanas propias, accesos y configuración a cada espacio.
+- Cambiar mediante Dock, ratón y atajos.
+- Guardar y restaurar cada espacio.
+- Investigar integración con escritorios globales solo si existe API oficial.
+
+**Entregables:** escritorios internos persistentes y cambio rápido.
+
+**Salida:** cada espacio restaura su contenido sin confundirlo con los escritorios globales del sistema.
+
+### Fase 9 — Pantallas, periféricos y compatibilidad
+
+**Objetivo:** robustecer la experiencia en diferentes monitores y entornos Android desktop.
+
+**Trabajo**
+- Detectar conexión y desconexión de pantallas.
+- Adaptar resolución, densidad, orientación, escala y área útil.
+- Gestionar ratón, hover, rueda, botones y foco.
+- Añadir atajos configurables.
+- Restaurar distribución tras conectar/desconectar monitor.
+- Validar Samsung DeX primero y después otros entornos Android desktop.
+- Comprobar específicamente la zona hover del Dock y las superposiciones en cada entorno.
+
+**Entregables:** perfiles de pantalla, compatibilidad de periféricos y matriz de pruebas.
+
+**Salida:** cambios de pantalla sin bloqueos ni pérdida de configuración en escenarios validados.
+
+### Fase 10 — Personalización, rendimiento y estabilidad
+
+**Objetivo:** preparar el uso diario.
+
+**Trabajo**
+- Temas, fondos, iconos, tamaños, transparencias y animaciones.
+- Ajustes completos de Dock, barra superior, accesos y ventanas.
+- Opción para reducir animaciones y mejorar accesibilidad.
+- Optimización de CPU, memoria y batería.
+- Recuperación ante fallos, migración de preferencias y pruebas prolongadas.
+- Revisar permisos, privacidad y comportamiento en segundo plano.
+
+**Entregables:** ajustes completos, pruebas de rendimiento y documentación de usuario.
+
+**Salida:** sin fallos críticos abiertos en los dispositivos de referencia.
+
+### Fase 11 — Widgets Android reales (aplazada)
+
+**Objetivo:** incorporar widgets de proveedores Android cuando el escritorio principal esté estabilizado.
+
+**Trabajo**
+- Diagnosticar el fallo previo de visualización tras seleccionar proveedor.
+- Implementar y validar el ciclo de vida de `AppWidgetHost`.
+- Añadir, configurar, mover, redimensionar y eliminar widgets.
+- Persistir ubicación y tamaño.
+- Probar widgets interactivos y restauración tras reinicio.
+
+**Entregables:** selector y alojamiento de widgets reales.
+
+**Salida:** widgets de varios proveedores se muestran y funcionan de forma estable.
+
+**Prioridad:** aplazada; no bloquea las fases 1–10.
+
+### Fase 12 — Beta, publicación y mantenimiento
+
+**Objetivo:** distribuir una versión estable y mantenerla.
+
+**Trabajo**
+- Builds debug y release, firma y versionado.
+- Pruebas de instalación, actualización y migración.
+- Publicar APK beta y canal de incidencias.
+- Mantener matriz de compatibilidad Android/One UI y otros entornos.
+- Documentar claramente qué funciones necesitan Accesibilidad, Superposición o integraciones opcionales.
+
+**Entregables:** APK release, guía de instalación, notas de versión y matriz de dispositivos probados.
+
+**Salida:** instalación y actualización reproducibles y funciones documentadas con su nivel real de compatibilidad.
+
+## Orden de prioridades
+
+| Prioridad | Trabajo |
+|---|---|
+| P0 | Diagnóstico y viabilidad del entorno |
+| P1 | Arquitectura, escritorio, catálogo y lanzamiento |
+| P1 | Dock flotante, auto-ocultación y activación por ratón |
+| P1 | Ventanas propias completas |
+| P2 | Integración externa con DeX y Snap |
+| P2 | Escritorios virtuales internos |
+| P2 | Compatibilidad con monitores y periféricos |
+| P3 | Personalización, rendimiento y publicación |
+| Aplazada | Widgets Android reales |
+| Experimental | Operaciones avanzadas mediante Shizuku/root |
+
+## Reglas de desarrollo y validación
+
+- Cada fase debe terminar con código integrado, compilación CI correcta, pruebas y documentación.
+- No se marca una función como terminada por escribir el código: debe compilar y superar pruebas.
+- Las pruebas de hardware deben registrar entorno, versión Android/One UI, modo de pantalla y resultado, sin subir identificadores personales del dispositivo.
+- Los informes de diagnóstico originales permanecen fuera del repositorio; solo se publican resultados agregados y anónimos.
+- Las funciones que requieran permisos especiales deben explicar su finalidad y seguir siendo opcionales cuando sea posible.
+- Shizuku y root se implementarán como adaptadores aislados, nunca como dependencias del núcleo.
+- Si una función no es posible sin privilegios, se documentará la limitación y se ofrecerá una alternativa estándar.
+- No se afirmará que DexDesktop controla ventanas externas cuando la operación la realiza Android/DeX.
 - Los cambios de alcance y decisiones arquitectónicas se anotarán en este documento o en ADRs.
 
-## Estado actual
+## Estado actual del proyecto
 
-- [x] Repositorio creado y rama `develop` disponible.
-- [x] Estructura inicial del proyecto Android y pipeline de compilación añadidos.
-- [x] Fase 0: comparación inicial de los escenarios móvil y pantalla externa/DeX, con resultados agregados y sin identificadores del dispositivo.
-- [x] Fase 0: detección de una pantalla en modo móvil y dos en el escenario con pantalla externa.
-- [x] Fase 0: estado de multi-ventana observado como inactivo en modo móvil y activo en el escenario DeX.
-- [x] Fase 0: inventario de proveedores de widgets disponible en ambos escenarios (34 en cada informe).
-- [x] Fase 0: APK de diagnóstico ampliada con registro interactivo de pruebas de gestión de ventanas y compilación CI correcta.
-- [x] Fase 0: pruebas de mover, redimensionar, minimizar/restaurar, maximizar/restaurar y Snap en DeX (resultado PASS registrado en el informe de diagnóstico).
-- [x] Fase 0: prueba de gestión de ventanas de aplicaciones externas mediante los controles nativos de DeX (PASS registrado). Esto valida el comportamiento del sistema, no control directo desde DexDesktop.
-- [x] Fase 0: probar el selector del sistema y el flujo de alojamiento de widgets; el selector detecta proveedores, pero la prueba real de visualización ha fallado y queda pendiente de diagnóstico.
-- [ ] Fase 0: matriz de viabilidad aprobada (se completará progresivamente; widgets quedan fuera del camino crítico inicial).
-- [ ] Fase 1: arquitectura definitiva, persistencia y ciclo de vida pendientes.\n- [x] Inicio de Fase 2: módulo de aplicación real separado del diagnóstico, primera superficie de escritorio, barra superior, Dock, menú de aplicaciones y lanzamiento de apps Android.\n- [ ] Fase 2: iconos reales, organización persistente, adaptación a distintos monitores y pruebas visuales en DeX pendientes.
+- [x] Repositorio y rama `develop`.
+- [x] Módulo de diagnóstico `:app` separado del producto.
+- [x] Módulo de producto `:desktop` creado con Kotlin y Compose.
+- [x] Pipeline CI configurado para compilar ambos módulos.
+- [x] Primera superficie de escritorio con barra superior, Dock, menú de aplicaciones y lanzamiento de apps.
+- [x] Diagnóstico de DeX: pruebas registradas de mover, redimensionar, minimizar/restaurar, maximizar/restaurar y Snap mediante controles nativos.
+- [ ] Verificar CI de la versión actual del módulo `:desktop` y descargar/probar su APK.
+- [ ] Completar Fase 1: arquitectura, persistencia y flujo de permisos.
+- [ ] Completar Fase 2: iconos reales, organización persistente y adaptación visual.
+- [ ] Implementar Fase 4: servicio de Dock, Accesibilidad, superposición y zona hover.
+- [ ] Implementar ventanas propias completas.
+- [ ] Validar la detección de maximizada/pantalla completa en el dispositivo DeX.
 
-**Decisión de producto — interfaz:** DexDesktop es una aplicación para modo escritorio Android, no un launcher móvil adaptable. Samsung DeX es la primera plataforma objetivo, pero las capas de interfaz y gestión deben evitar dependencias innecesarias de Samsung para facilitar su adaptación a otros entornos Android desktop. No se diseñarán pantallas móviles ni se reducirá el escritorio a una vista de teléfono; las pruebas sin monitor solo sirven para diagnóstico técnico.
+## Decisiones de privacidad y alcance
 
-**Privacidad de las pruebas:** no se guardan en este repositorio informes JSON originales, modelo del teléfono, identificadores, número de compilación ni otros datos identificativos. Los resultados publicados aquí son agregados: el escenario móvil registró una pantalla y multi-ventana inactiva; el escenario con pantalla externa registró dos pantallas y multi-ventana activa; ambos informes detectaron 34 proveedores de widgets.
+No se subirán al repositorio modelo del teléfono, números de serie, identificadores, números de compilación ni informes JSON originales que puedan identificar el dispositivo. Los resultados publicados serán agregados y anónimos.
 
-**Resultados funcionales registrados (diagnóstico más reciente):** PASS en pantalla externa, Samsung DeX, ventana flotante, movimiento, redimensionado, minimizar/restaurar, maximizar/restaurar, Snap y ventanas de aplicaciones externas mediante DeX (9 pruebas PASS). La prueba de widgets está marcada FAIL: se detectan 34 proveedores y el usuario pudo seleccionar un widget, pero no llegó a mostrarse. Por tanto, el selector funciona al menos parcialmente y el fallo está después de la selección; todavía no se ha aislado si ocurre al recuperar la información del proveedor, configurar, crear o adjuntar la vista. Estas pruebas validan el comportamiento del sistema en el dispositivo ensayado, no el control directo de ventanas externas desde DexDesktop.
+La aplicación real vive en `:desktop`; `:app` sigue siendo una herramienta de diagnóstico. No se diseñará una interfaz móvil alternativa. Las pruebas sin pantalla externa solo se usarán para diagnóstico técnico.
 
-**Nota:** el código de diagnóstico es provisional y no debe confundirse con la aplicación de escritorio final. La fase 0 aún necesita validar widgets reales mediante AppWidgetHost y completar la matriz de viabilidad.
-
-
-## Decisión de priorización — noviembre de 2026
-
-Se aplaza la investigación adicional de widgets. La detección de proveedores está comprobada, pero la visualización mediante AppWidgetHost no se considera un requisito de entrada para construir el escritorio. Se retomará cuando la superficie principal, el catálogo de aplicaciones y el motor de ventanas propias estén asentados.
-
-La aplicación real comienza en el módulo independiente `desktop`; el módulo `app` permanece como diagnóstico. La primera entrega de `desktop` es una base funcional de escritorio con menú de aplicaciones y lanzamiento de actividades Android. No debe confundirse con una versión terminada: la persistencia, ventanas internas completas, adaptación a monitores y pruebas prolongadas aún están pendientes.
+La detección del estado maximizado de aplicaciones externas se considerará una capacidad dependiente de la versión y del fabricante hasta demostrar que los eventos y datos disponibles son fiables. El comportamiento del Dock tendrá un modo manual de respaldo para evitar que un falso positivo deje el Dock inaccesible.
