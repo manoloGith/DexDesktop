@@ -337,13 +337,15 @@ La clasificación puede cambiar tras pruebas en dispositivos y versiones concret
 - [x] Fase 0: detección de una pantalla en modo móvil y dos en el escenario con pantalla externa.
 - [x] Fase 0: estado de multi-ventana observado como inactivo en modo móvil y activo en el escenario DeX.
 - [x] Fase 0: inventario de proveedores de widgets disponible en ambos escenarios (34 en cada informe).
-- [ ] Fase 0: APK de diagnóstico ampliada con registro interactivo de pruebas de gestión de ventanas y compilación verificada.
-- [ ] Fase 0: probar mover, redimensionar, minimizar, maximizar/restaurar y Snap en DeX.
-- [ ] Fase 0: probar el comportamiento de ventanas de aplicaciones externas y distinguir controles del sistema frente a capacidades propias.
+- [x] Fase 0: APK de diagnóstico ampliada con registro interactivo de pruebas de gestión de ventanas y compilación CI correcta.
+- [x] Fase 0: pruebas de mover, redimensionar, minimizar/restaurar, maximizar/restaurar y Snap en DeX (resultado PASS registrado en el informe de diagnóstico).
+- [x] Fase 0: prueba de gestión de ventanas de aplicaciones externas mediante los controles nativos de DeX (PASS registrado). Esto valida el comportamiento del sistema, no control directo desde DexDesktop.
 - [ ] Fase 0: crear y mostrar un widget real mediante AppWidgetHost.
 - [ ] Fase 0: matriz de viabilidad aprobada.
 - [ ] Fases del producto definitivo: pendientes de implementación.
 
 **Privacidad de las pruebas:** no se guardan en este repositorio informes JSON originales, modelo del teléfono, identificadores, número de compilación ni otros datos identificativos. Los resultados publicados aquí son agregados: el escenario móvil registró una pantalla y multi-ventana inactiva; el escenario con pantalla externa registró dos pantallas y multi-ventana activa; ambos informes detectaron 34 proveedores de widgets.
 
-**Nota:** el código de diagnóstico actual es provisional y no debe confundirse con la aplicación de escritorio final. La comparación de pantallas y el estado multi-ventana son observaciones preliminares; todavía falta probar las acciones de gestión de ventanas, los widgets reales y la interacción con aplicaciones externas.
+**Resultados funcionales registrados:** el informe de diagnóstico más reciente marca como PASS la apertura de la app en ventana flotante, movimiento, redimensionado, minimizar/restaurar, maximizar/restaurar, Snap y gestión de ventanas de otras aplicaciones mediante DeX. Son pruebas del comportamiento de DeX en el escenario probado; no demuestran que DexDesktop pueda controlar directamente ventanas externas. La prueba de creación y visualización de un widget real mediante AppWidgetHost sigue como NOT_TESTED.
+
+**Nota:** el código de diagnóstico es provisional y no debe confundirse con la aplicación de escritorio final. La fase 0 aún necesita validar widgets reales mediante AppWidgetHost y completar la matriz de viabilidad.
