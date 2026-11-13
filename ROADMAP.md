@@ -4,7 +4,7 @@
 
 ## Visión del producto
 
-Construir un entorno de escritorio para Android, optimizado para pantallas externas y Samsung DeX, con una experiencia visual inspirada en escritorios modernos: barra superior, Dock, escritorio configurable, widgets y acceso fluido a aplicaciones.
+Construir una aplicación de escritorio para Android, diseñada desde el inicio para ejecutarse en modo escritorio sobre una pantalla externa. Samsung DeX será la primera plataforma de referencia, con una arquitectura adaptable a otros entornos de escritorio Android. La interfaz principal será siempre la de escritorio: barra superior, Dock, escritorio configurable, widgets y acceso fluido a aplicaciones. No se desarrollará una interfaz móvil como experiencia alternativa del producto.
 
 La prioridad es ofrecer una experiencia real y útil, no una maqueta visual. Las aplicaciones y widgets deben ser los de Android siempre que la plataforma lo permita. Las funciones que Android no permita controlar desde una aplicación normal se identificarán claramente y se resolverán mediante integración del fabricante, alternativas parciales o cambios de alcance.
 
@@ -44,7 +44,7 @@ La clasificación puede cambiar tras pruebas en dispositivos y versiones concret
 - Completar la APK de diagnóstico y corregir su compilación.
 - Inventariar capacidades de Android, pantallas y características disponibles. Los informes originales se mantienen fuera del repositorio; solo se documentan resultados agregados y anónimos.
 - Inventariar aplicaciones iniciables y proveedores de widgets.
-- Probar en el teléfono y con monitor externo: Samsung DeX, teclado, ratón, resolución, densidad y cambios de pantalla.
+- Probar la aplicación en modo escritorio con monitor externo: Samsung DeX como referencia inicial, teclado, ratón, resolución, densidad, ventanas y cambios de pantalla. El modo móvil solo podrá utilizarse para tareas técnicas de instalación o diagnóstico, nunca como objetivo de interfaz.
 - Ejecutar pruebas manuales de ventanas: mover, redimensionar, minimizar, maximizar, restaurar y Snap.
 - Separar las pruebas de gestión nativa de ventanas DeX de cualquier supuesto control de ventanas externas desde DexDesktop.
 - Investigar qué APIs públicas o integraciones oficiales permiten cada comportamiento.
@@ -71,7 +71,7 @@ La clasificación puede cambiar tras pruebas en dispositivos y versiones concret
 - Crear gestión de configuración y persistencia con DataStore; usar Room si el volumen y las relaciones de datos lo justifican.
 - Gestionar ciclo de vida, cambios de configuración, orientación, tamaños y pantallas.
 - Preparar registro de errores, pruebas automatizadas y compilaciones CI.
-- Definir perfiles de interfaz: móvil y escritorio.
+- Definir una única experiencia de escritorio, con adaptación a distintos monitores y entornos Android desktop. No crear un perfil de interfaz móvil.
 
 **Entregables**
 - Estructura modular de la aplicación.
@@ -93,7 +93,7 @@ La clasificación puede cambiar tras pruebas en dispositivos y versiones concret
 - Crear Dock inferior o lateral configurable, sin reproducir una barra de tareas de Windows.
 - Añadir accesos directos, carpetas y menú de aplicaciones.
 - Permitir seleccionar DexDesktop como launcher predeterminado cuando el dispositivo lo admita.
-- Adaptar distribución, escala y márgenes a pantalla táctil y monitor externo.
+- Adaptar distribución, escala, márgenes y áreas de trabajo a monitores, resoluciones y densidades distintas, priorizando ratón y teclado sin excluir pantallas táctiles de escritorio.
 
 **Entregables**
 - Escritorio funcional.
@@ -246,7 +246,7 @@ La clasificación puede cambiar tras pruebas en dispositivos y versiones concret
 - Adaptar la interfaz a resolución, densidad, orientación y área útil.
 - Gestionar ratón, rueda, botones, foco y hover.
 - Añadir atajos de teclado configurables.
-- Crear perfiles móvil, monitor externo y Samsung DeX.
+- Crear perfiles de escritorio por plataforma y configuración de monitor (Samsung DeX inicialmente y otros entornos Android después). No implementar un perfil de interfaz móvil.
 - Restaurar ventanas y distribución tras conectar o desconectar el monitor.
 - Probar adaptadores USB-C/HDMI, hubs y periféricos disponibles.
 
@@ -343,6 +343,8 @@ La clasificación puede cambiar tras pruebas en dispositivos y versiones concret
 - [ ] Fase 0: crear y mostrar un widget real mediante AppWidgetHost.
 - [ ] Fase 0: matriz de viabilidad aprobada.
 - [ ] Fases del producto definitivo: pendientes de implementación.
+
+**Decisión de producto — interfaz:** DexDesktop es una aplicación para modo escritorio Android, no un launcher móvil adaptable. Samsung DeX es la primera plataforma objetivo, pero las capas de interfaz y gestión deben evitar dependencias innecesarias de Samsung para facilitar su adaptación a otros entornos Android desktop. No se diseñarán pantallas móviles ni se reducirá el escritorio a una vista de teléfono; las pruebas sin monitor solo sirven para diagnóstico técnico.
 
 **Privacidad de las pruebas:** no se guardan en este repositorio informes JSON originales, modelo del teléfono, identificadores, número de compilación ni otros datos identificativos. Los resultados publicados aquí son agregados: el escenario móvil registró una pantalla y multi-ventana inactiva; el escenario con pantalla externa registró dos pantallas y multi-ventana activa; ambos informes detectaron 34 proveedores de widgets.
 
