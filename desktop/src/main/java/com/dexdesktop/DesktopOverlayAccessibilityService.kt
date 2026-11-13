@@ -33,7 +33,7 @@ class DesktopOverlayAccessibilityService : AccessibilityService() {
     private var ownAppIsForeground = true
 
     private val hideDockRunnable = Runnable {
-        if (!pointerOverDock && !isExternalMaximized) {
+        if (!pointerOverDock && isExternalMaximized) {
             hideDock()
         }
     }
@@ -66,9 +66,9 @@ class DesktopOverlayAccessibilityService : AccessibilityService() {
             ensureEdgeTrigger()
             if (isExternalMaximized) {
                 hideDock()
-            } else if (!dockVisible) {
-                // Keep the dock tucked away until the pointer reaches the edge.
-                ensureEdgeTrigger()
+            } else {
+                // Outside maximized/full-screen windows the dock remains visible.
+                showDock()
             }
         }
     }
@@ -127,7 +127,7 @@ class DesktopOverlayAccessibilityService : AccessibilityService() {
     }
 
     private fun ensureEdgeTrigger() {
-        if (ownAppIsForeground || edgeTriggerView != null || dockVisible || isExternalMaximized) return
+        if (ownAppIsForeground || edgeTriggerView != null || dockVisible) return
         val trigger = TextView(this).apply {
             text = "•••"
             textSize = 10f
@@ -149,7 +149,7 @@ class DesktopOverlayAccessibilityService : AccessibilityService() {
     }
 
     private fun showDock() {
-        if (ownAppIsForeground || isExternalMaximized) return
+        if (ownAppIsForeground) return
         handler.removeCallbacks(hideDockRunnable)
         removeView(edgeTriggerView)
         edgeTriggerView = null
@@ -195,7 +195,7 @@ class DesktopOverlayAccessibilityService : AccessibilityService() {
         removeView(dockView)
         dockView = null
         dockVisible = false
-        if (!ownAppIsForeground && !isExternalMaximized) ensureEdgeTrigger()
+        if (!ownAppIsForeground) ensureEdgeTrigger()
     }
 
     private fun removeOverlayWindows() {
