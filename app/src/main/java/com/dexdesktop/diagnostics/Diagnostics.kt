@@ -15,7 +15,7 @@ import java.util.Date
 import java.util.Locale
 
 object Diagnostics {
-    fun collect(context: Context, activity: Activity): JSONObject {
+    fun collect(context: Context, activity: Activity, previousReport: JSONObject? = null): JSONObject {
         val pm = context.packageManager
         val displays = context.getSystemService(Context.DISPLAY_SERVICE) as DisplayManager
         val widgetManager = AppWidgetManager.getInstance(context)
@@ -35,8 +35,27 @@ object Diagnostics {
         displays.displays.forEach { displayArray.put(displayJson(it)) }
         val freeform = pm.hasSystemFeature("android.software.freeform_window_management")
         val multiWindow = if (Build.VERSION.SDK_INT >= 24) activity.isInMultiWindowMode else false
+
+        val manualTests = JSONArray()
+        val definitions = listOf(
+            "externalDisplay" to "Conecta el monitor USB-C/HDMI y comprueba que aparece como una pantalla adicional.",
+            "desktopMode" to "Activa Samsung DeX y comprueba que el escritorio aparece en el monitor externo.",
+            "freeformWindows" to "Abre esta aplicación en una ventana flotante desde DeX o desde la multitarea.",
+            "windowMove" to "En DeX, arrastra la barra de título de esta aplicación y comprueba si puedes moverla.",
+            "windowResize" to "Arrastra un borde o una esquina de esta ventana y comprueba si puedes cambiar su tamaño.",
+            "windowMinimizeRestore" to "Minimiza esta ventana desde los controles de DeX y vuelve a abrirla desde la barra de tareas.",
+            "windowMaximizeRestore" to "Maximiza esta ventana y después restáurala a su tamaño anterior.",
+            "windowSnap" to "Prueba las zonas o mecanismos de ajuste de ventanas que ofrece DeX.",
+            "externalAppWindows" to "Abre otra aplicación Android y comprueba qué controles de ventana ofrece DeX. Evalúa el sistema, no el control directo de DexDesktop.",
+            "widgets" to "La detección de proveedores está disponible; añadir y mostrar un widget real mediante AppWidgetHost queda para una prueba posterior."
+        )
+        definitions.forEach { (id, instruction) ->
+            val oldStatus = findTestStatus(previousReport, id)
+            manualTests.put(manual(id, instruction, oldStatus))
+        }
+
         return JSONObject()
-            .put("schemaVersion", 1)
+            .put("schemaVersion", 2)
             .put("generatedAt", SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.US).format(Date()))
             .put("device", JSONObject()
                 .put("manufacturer", Build.MANUFACTURER.orEmpty()).put("model", Build.MODEL.orEmpty())
@@ -48,18 +67,23 @@ object Diagnostics {
                 .put("thirdPartyWidgetProvidersVisible", widgets.size))
             .put("displays", displayArray).put("launchableApps", JSONArray(apps))
             .put("widgetProviders", JSONArray(widgets))
-            .put("manualTests", JSONArray()
-                .put(manual("externalDisplay", "Conecta el monitor USB-C/HDMI y comprueba que aparece en la lista de pantallas."))
-                .put(manual("desktopMode", "Activa Samsung DeX y vuelve a generar el informe."))
-                .put(manual("freeformWindows", "Abre esta app en ventana flotante desde DeX o el selector multitarea."))
-                .put(manual("windowControls", "Comprueba si Android/DeX permite mover, redimensionar, minimizar y maximizar ventanas."))
-                .put(manual("snap", "Prueba las zonas de ajuste de ventanas disponibles en el dispositivo."))
-                .put(manual("widgets", "La creación y colocación de un widget real mediante AppWidgetHost queda para la siguiente fase.")))
+            .put("manualTests", manualTests)
             .put("assessment", JSONObject().put("status", "PRELIMINARY")
-                .put("note", "La presencia de una API o feature no demuestra que el comportamiento deseado funcione. Las pruebas manuales siguen pendientes."))
+                .put("note", "Las pruebas manuales se registran por separado. La disponibilidad de una API o feature no demuestra por sí sola el comportamiento deseado."))
     }
-    private fun manual(id: String, instruction: String) =
-        JSONObject().put("id", id).put("instruction", instruction).put("status", "NOT_TESTED")
+
+    private fun findTestStatus(report: JSONObject?, id: String): String {
+        val tests = report?.optJSONArray("manualTests") ?: return "NOT_TESTED"
+        for (index in 0 until tests.length()) {
+            val item = tests.optJSONObject(index) ?: continue
+            if (item.optString("id") == id) return item.optString("status", "NOT_TESTED")
+        }
+        return "NOT_TESTED"
+    }
+
+    private fun manual(id: String, instruction: String, status: String) =
+        JSONObject().put("id", id).put("instruction", instruction).put("status", status)
+
     private fun displayJson(display: Display): JSONObject {
         val metrics = android.util.DisplayMetrics()
         @Suppress("DEPRECATION")
