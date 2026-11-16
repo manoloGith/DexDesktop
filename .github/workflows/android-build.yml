@@ -22,7 +22,7 @@ jobs:
         with:
           gradle-version: '8.9'
       - name: Build debug APKs
-        run: gradle --no-daemon :app:assembleDebug :desktop:assembleDebug
+        run: gradle --no-daemon :app:assembleDebug :desktop:assembleStandardDebug :desktop:assembleAccessibilityDebug
       - name: Upload diagnostics APK
         uses: actions/upload-artifact@v4
         with:
@@ -30,10 +30,17 @@ jobs:
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 14
-      - name: Upload DexDesktop application APK
+      - name: Upload standard DexDesktop APK (without Accessibility Service)
         uses: actions/upload-artifact@v4
         with:
-          name: dexdesktop-desktop-debug
-          path: desktop/build/outputs/apk/debug/desktop-debug.apk
+          name: dexdesktop-standard-debug
+          path: desktop/build/outputs/apk/standard/debug/desktop-standard-debug.apk
+          if-no-files-found: error
+          retention-days: 14
+      - name: Upload DexDesktop APK (with Accessibility Service)
+        uses: actions/upload-artifact@v4
+        with:
+          name: dexdesktop-accessibility-debug
+          path: desktop/build/outputs/apk/accessibility/debug/desktop-accessibility-debug.apk
           if-no-files-found: error
           retention-days: 14
