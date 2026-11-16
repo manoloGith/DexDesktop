@@ -82,7 +82,8 @@ class DesktopActivity : ComponentActivity() {
                     DesktopWorkspace(
                         apps = loadLaunchableApps(),
                         onLaunchApp = ::launchApp,
-                        onOpenAccessibilitySettings = { startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)) }
+                        onOpenAccessibilitySettings = { startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)) },
+                        showAccessibilitySettings = BuildConfig.ACCESSIBILITY_OVERLAY_ENABLED
                     )
                 }
             }
@@ -118,7 +119,7 @@ class DesktopActivity : ComponentActivity() {
 }
 
 @Composable
-private fun DesktopWorkspace(apps: List<LaunchableApp>, onLaunchApp: (LaunchableApp) -> Unit, onOpenAccessibilitySettings: () -> Unit) {
+private fun DesktopWorkspace(apps: List<LaunchableApp>, onLaunchApp: (LaunchableApp) -> Unit, onOpenAccessibilitySettings: () -> Unit, showAccessibilitySettings: Boolean) {
     val windows = remember { mutableStateListOf<DesktopWindow>() }
     var drawerOpen by remember { mutableStateOf(false) }
     var clock by remember { mutableStateOf(LocalDateTime.now()) }
@@ -165,7 +166,8 @@ private fun DesktopWorkspace(apps: List<LaunchableApp>, onLaunchApp: (Launchable
                             windows.add(window)
                         },
                         onClose = { windows.remove(window) },
-                        onOpenAccessibilitySettings = onOpenAccessibilitySettings
+                        onOpenAccessibilitySettings = onOpenAccessibilitySettings,
+                        showAccessibilitySettings = showAccessibilitySettings
                     )
                 }
 
@@ -295,7 +297,7 @@ private fun AppDrawer(apps: List<LaunchableApp>, onDismiss: () -> Unit, onLaunch
 }
 
 @Composable
-private fun InternalWindow(window: DesktopWindow, onFocus: () -> Unit, onClose: () -> Unit, onOpenAccessibilitySettings: () -> Unit) {
+private fun InternalWindow(window: DesktopWindow, onFocus: () -> Unit, onClose: () -> Unit, onOpenAccessibilitySettings: () -> Unit, showAccessibilitySettings: Boolean) {
     Card(
         Modifier.offset { IntOffset(window.x.roundToInt(), window.y.roundToInt()) }
             .width(500.dp).height(320.dp)
@@ -322,7 +324,7 @@ private fun InternalWindow(window: DesktopWindow, onFocus: () -> Unit, onClose: 
             }
             when (window.kind) {
                 "computer" -> ComputerPanel()
-                "settings" -> SettingsPanel(onOpenAccessibilitySettings)
+                "settings" -> SettingsPanel(onOpenAccessibilitySettings, showAccessibilitySettings)
                 else -> ComputerPanel()
             }
         }
@@ -353,7 +355,7 @@ private fun PanelTile(title: String, subtitle: String) {
 }
 
 @Composable
-private fun SettingsPanel(onOpenAccessibilitySettings: () -> Unit) {
+private fun SettingsPanel(onOpenAccessibilitySettings: () -> Unit, showAccessibilitySettings: Boolean) {
     Column(Modifier.fillMaxSize().padding(22.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text("Ajustes de DexDesktop", color = Color(0xFF1C2D43), fontSize = 22.sp, fontWeight = FontWeight.Bold)
         Text("La configuración persistente se incorporará en la siguiente iteración.", color = Color(0xFF52657A))
@@ -363,8 +365,13 @@ private fun SettingsPanel(onOpenAccessibilitySettings: () -> Unit) {
         Text("• Distribución de iconos", color = Color(0xFF344A62))
         Text("• Atajos de teclado y ratón", color = Color(0xFF344A62))
         Divider(color = Color(0xFFD7E0EA))
-        Text("Servicio de escritorio", color = Color(0xFF20334A), fontWeight = FontWeight.SemiBold)
-        Text("Activa el servicio para probar la barra superior y el Dock flotantes sobre otras aplicaciones. No necesita root ni Shizuku.", color = Color(0xFF52657A), fontSize = 12.sp)
-        Button(onClick = onOpenAccessibilitySettings) { Text("Abrir ajustes de accesibilidad") }
+        if (showAccessibilitySettings) {
+            Text("Servicio de escritorio", color = Color(0xFF20334A), fontWeight = FontWeight.SemiBold)
+            Text("Esta variante incluye el servicio opcional de accesibilidad para probar la barra superior y el Dock flotantes. Android solicitará que lo actives manualmente.", color = Color(0xFF52657A), fontSize = 12.sp)
+            Button(onClick = onOpenAccessibilitySettings) { Text("Abrir ajustes de accesibilidad") }
+        } else {
+            Text("Variante estándar", color = Color(0xFF20334A), fontWeight = FontWeight.SemiBold)
+            Text("Esta versión no declara ni incluye el servicio de accesibilidad. Es la recomendada para probar el escritorio básico.", color = Color(0xFF52657A), fontSize = 12.sp)
+        }
     }
 }
